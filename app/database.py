@@ -38,11 +38,19 @@ def get_db():
 def create_tables():
     """Create all tables"""
     try:
-        # Import models to register them
-        from app.models import User  # This will register the User model
+        # Import all models to register them with SQLAlchemy
+        from app.models import User, UserProfile, ActivityLog
         
+        logger.info("📋 Creating database tables...")
         Base.metadata.create_all(bind=engine)
         logger.info("✅ Database tables created successfully")
+        
+        # Verify tables were created
+        from sqlalchemy import inspect
+        inspector = inspect(engine)
+        tables = inspector.get_table_names()
+        logger.info(f"📊 Created tables: {tables}")
+        
     except Exception as e:
         logger.error(f"❌ Failed to create tables: {e}")
         raise
@@ -55,8 +63,8 @@ def test_connection():
             # Use text() for raw SQL
             result = conn.execute(text("SELECT 1"))
             result.fetchone()
-        logger.info("✅ Database connection successful")
-        return True
+            logger.info("✅ Database connection successful")
+            return True
     except Exception as e:
         logger.error(f"❌ Database connection failed: {e}")
         return False

@@ -68,18 +68,24 @@ def main():
             print("✅ Database tables created successfully!")
         except Exception as e:
             print(f"❌ Failed to create tables: {e}")
+            import traceback
+            traceback.print_exc()
             sys.exit(1)
         
         print()
         print("🎉 Database initialization completed successfully!")
         print("✅ Ready to start the application")
-        
+    
     except ImportError as e:
         print(f"❌ Import error: {e}")
         print("💡 Make sure you're running this from the project root")
+        import traceback
+        traceback.print_exc()
         sys.exit(1)
     except Exception as e:
         print(f"❌ Unexpected error: {e}")
+        import traceback
+        traceback.print_exc()
         sys.exit(1)
 
 

@@ -10,7 +10,7 @@ from uuid import UUID
 import logging
 
 from app.models.user import User, UserProfile, ActivityLog, UserType, UserStatus
-from app.schemas.user import UserCreate, UserLogin, UserWithProfile
+from app.schemas.user import UserCreate, UserLogin
 from app.core.security import (
     verify_password,
     get_password_hash,
@@ -36,9 +36,24 @@ class AuthService:
     def __init__(self, db: Session):
         self.db = db
 
+    def get_user_with_profile(self, user_id: UUID):
+        """Get user with profile"""
+        user = self.db.query(User).filter(User.id == user_id).first()
+        if not user:
+            return None
+
+        # Load profile if not already loaded
+        if not hasattr(user, 'profile') or not user.profile:
+            profile = self.db.query(UserProfile).filter(
+                UserProfile.user_id == user_id
+            ).first()
+            user.profile = profile
+
+        return user
+
     def register_user(
         self,
-        user_data: UserCreate,
+        user_ UserCreate,
         ip_address: Optional[str] = None,
         user_agent: Optional[str] = None,
     ) -> Tuple[User, str]:
@@ -98,7 +113,6 @@ class AuthService:
             )
 
             self.db.commit()
-
             logger.info(f"New user registered: {user.email}")
             return user, user.email_verification_token
 
@@ -200,7 +214,6 @@ class AuthService:
     def refresh_access_token(self, refresh_token: str) -> dict:
         """Create new access token from refresh token"""
         payload = verify_token(refresh_token)
-
         if not payload or payload.get("type") != "refresh":
             raise AuthenticationError("توکن نامعتبر است")
 
@@ -208,7 +221,7 @@ class AuthService:
         if not user_id:
             raise AuthenticationError("توکن نامعتبر است")
 
-        user = self.db.query(User).filter(User.id == user_id).first()
+        user = self.get_user_by_id(UUID(user_id))
         if not user or not user.can_login():
             raise AuthenticationError("کاربر نامعتبر یا غیرفعال است")
 
@@ -216,19 +229,16 @@ class AuthService:
 
     def verify_email(self, token: str) -> bool:
         """Verify user email with token"""
-        user = self.db.query(User).filter(
-            User.email_verification_token == token
-        ).first()
-
+        user = self.db.query(User).filter(User.email_verification_token == token).first()
         if not user:
             raise NotFoundError("توکن تأیید نامعتبر است")
 
-        # Check if token is expired (24 hours)
+        # Check token expiration (24 hours)
         if user.email_verification_sent_at:
             if datetime.utcnow() - user.email_verification_sent_at > timedelta(hours=24):
                 raise ValidationError("توکن تأیید منقضی شده است")
 
-        # Verify email
+        # Mark as verified
         user.is_email_verified = True
         user.is_verified = True
         user.email_verification_token = None
@@ -245,9 +255,8 @@ class AuthService:
         return True
 
     def resend_verification_email(self, email: str) -> str:
-        """Resend verification email"""
+        """Resend email verification token"""
         user = self.db.query(User).filter(User.email == email).first()
-
         if not user:
             raise NotFoundError("کاربری با این ایمیل یافت نشد")
 
@@ -268,15 +277,13 @@ class AuthService:
         return user.email_verification_token
 
     def request_password_reset(self, email: str) -> str:
-        """Request password reset"""
+        """Request password reset (returns token or dummy)"""
         user = self.db.query(User).filter(User.email == email).first()
-
         if not user:
-            # Don't reveal if email exists
+            # Don't reveal existence
             logger.warning(f"Password reset requested for non-existent email: {email}")
-            return "dummy_token"  # Return dummy token for security
+            return "dummy_token"
 
-        # Generate reset token
         user.password_reset_token = generate_verification_token()
         user.password_reset_sent_at = datetime.utcnow()
 
@@ -290,24 +297,20 @@ class AuthService:
         return user.password_reset_token
 
     def reset_password(self, token: str, new_password: str) -> bool:
-        """Reset password with token"""
-        user = self.db.query(User).filter(
-            User.password_reset_token == token
-        ).first()
-
+        """Reset password using token"""
+        user = self.db.query(User).filter(User.password_reset_token == token).first()
         if not user:
             raise NotFoundError("توکن بازیابی نامعتبر است")
 
-        # Check if token is expired (1 hour)
+        # Check token expiration (1 hour)
         if user.password_reset_sent_at:
             if datetime.utcnow() - user.password_reset_sent_at > timedelta(hours=1):
                 raise ValidationError("توکن بازیابی منقضی شده است")
 
-        # Reset password
         user.password_hash = get_password_hash(new_password)
         user.password_reset_token = None
         user.password_reset_sent_at = None
-        user.failed_login_attempts = 0  # Reset failed attempts
+        user.failed_login_attempts = 0  # Reset attempts
 
         self._log_activity(
             user=user,
@@ -326,11 +329,9 @@ class AuthService:
         new_password: str,
     ) -> bool:
         """Change user password"""
-        # Verify current password
         if not verify_password(current_password, user.password_hash):
             raise AuthenticationError("رمز عبور فعلی اشتباه است")
 
-        # Update password
         user.password_hash = get_password_hash(new_password)
 
         self._log_activity(
