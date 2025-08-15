@@ -10,6 +10,7 @@ services:
       POSTGRES_DB: consultation_platform
       POSTGRES_USER: consultation_user
       POSTGRES_PASSWORD: consultation_password
+      POSTGRES_HOST_AUTH_METHOD: trust
     ports:
       - "5432:5432"
     volumes:
@@ -20,9 +21,10 @@ services:
           "CMD-SHELL",
           "pg_isready -U consultation_user -d consultation_platform",
         ]
-      interval: 10s
-      timeout: 5s
+      interval: 5s
+      timeout: 3s
       retries: 5
+      start_period: 10s
 
   # FastAPI Application
   app:
@@ -36,14 +38,21 @@ services:
       - ./uploads:/app/uploads
       - ./logs:/app/logs
     environment:
-      - DATABASE_URL=postgresql://consultation_user:consultation_password@postgres:5432/consultation_platform
+      - DATABASE_URL=postgresql://consultation_user:[REDACTED]@postgres:5432/consultation_platform
       - ENVIRONMENT=development
       - DEBUG=true
-      - SECRET_KEY=development-secret-key-change-in-production
+      - SECRET_KEY=development-secret-key-change-in-production-at-least-32-chars
+      - API_V1_STR=/api/v1
     depends_on:
       postgres:
         condition: service_healthy
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
 
 volumes:
   postgres_data:
