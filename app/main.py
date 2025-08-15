@@ -1,15 +1,30 @@
-from fastapi import FastAPI, HTTPException
+"""
+Main FastAPI application entry point
+"""
+
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from fastapi.exceptions import RequestValidationError
 import os
+import logging
 
 from app.config import settings
 from app.database import test_connection, create_tables
+from app.core.exceptions import CustomException
+from app.api.v1 import api_router
+
+# Setup logging
+logging.basicConfig(
+    level=getattr(logging, settings.LOG_LEVEL.upper()),
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+)
+logger = logging.getLogger(__name__)
 
 # Create FastAPI app
 app = FastAPI(
     title=settings.APP_NAME,
-    description="A secure online consultation platform",
+    description="A secure online consultation platform with complete authentication system",
     version="1.0.0",
     docs_url=f"{settings.API_V1_STR}/docs" if settings.DEBUG else None,
     redoc_url=f"{settings.API_V1_STR}/redoc" if settings.DEBUG else None,
@@ -18,96 +33,151 @@ app = FastAPI(
 # Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.BACKEND_CORS_ORIGINS,
+    allow_origins=settings.BACKEND_CORS_ORIGINS or ["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
 
+# Exception handlers
+@app.exception_handler(CustomException)
+async def custom_exception_handler(request: Request, exc: CustomException):
+    """Handle custom application exceptions"""
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={
+            "success": False,
+            "error": {
+                "message": exc.message,
+                "details": exc.details,
+                "path": str(request.url),
+            },
+        },
+    )
+
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    """Handle Pydantic model validation errors"""
+    return JSONResponse(
+        status_code=422,
+        content={
+            "success": False,
+            "error": {
+                "message": "داده‌های ارسالی نامعتبر است",
+                "details": exc.errors(),
+                "path": str(request.url),
+            },
+        },
+    )
+
+
+@app.exception_handler(404)
+async def not_found_handler(request: Request, exc):
+    """Handle 404 Not Found errors"""
+    return JSONResponse(
+        status_code=404,
+        content={
+            "success": False,
+            "error": {
+                "message": "منبع مورد نظر یافت نشد",
+                "path": str(request.url),
+            },
+        },
+    )
+
+
 @app.on_event("startup")
 async def startup_event():
-    """Startup event"""
-    print(f"🚀 Starting {settings.APP_NAME}...")
-    print(f"📝 Environment: {settings.ENVIRONMENT}")
-    print(f"🔧 Debug mode: {settings.DEBUG}")
-    
-    # Create directories
+    """Executed when the application starts"""
+    logger.info(f"🚀 Starting {settings.APP_NAME}...")
+    logger.info(f"📝 Environment: {settings.ENVIRONMENT}")
+    logger.info(f"🔧 Debug mode: {settings.DEBUG}")
+
+    # Create required directories
     try:
         os.makedirs(settings.UPLOAD_PATH, exist_ok=True)
         os.makedirs("./logs", exist_ok=True)
-        print("📁 Directories created successfully")
+        logger.info("📁 Directories created successfully")
     except Exception as e:
-        print(f"⚠️ Warning: Could not create directories: {e}")
-    
+        logger.warning(f"⚠️ Could not create directories: {e}")
+
     # Test database connection
-    print("🔍 Testing database connection...")
-    if test_connection():
-        print("✅ Database connection successful")
-        
-        # Try to create tables
+    logger.info("🔍 Testing database connection...")
+    db_connected = test_connection()
+
+    if db_connected:
+        logger.info("✅ Database connection successful")
+
+        # Import models and create tables
         try:
+            from app.models import User, UserProfile  # noqa: F401 (registers models)
             create_tables()
-            print("✅ Database tables ready")
+            logger.info("✅ Database tables created or verified")
         except Exception as e:
-            print(f"⚠️ Warning: Could not create tables: {e}")
+            logger.error(f"❌ Failed to create tables: {e}")
     else:
-        print("❌ Database connection failed")
-        print("⚠️ Application will start but database features may not work")
-    
-    print(f"🎉 {settings.APP_NAME} started successfully!")
+        logger.error("❌ Database connection failed")
+        logger.warning("⚠️ Application will start, but database features may not work")
+
+    logger.info(f"🎉 {settings.APP_NAME} started successfully!")
     if settings.DEBUG:
-        print(f"📚 API Docs: http://localhost:8000{settings.API_V1_STR}/docs")
-        print(f"🏥 Health Check: http://localhost:8000/health")
+        logger.info(f"📚 API Docs: http://localhost:8000{settings.API_V1_STR}/docs")
+        logger.info(f"🏥 Health Check: http://localhost:8000/health")
 
 
 @app.get("/")
 async def root():
-    """Root endpoint"""
+    """Root endpoint - General info about the API"""
     return {
+        "success": True,
         "message": f"Welcome to {settings.APP_NAME}",
         "version": "1.0.0",
         "environment": settings.ENVIRONMENT,
         "status": "running",
-        "docs_url": f"{settings.API_V1_STR}/docs" if settings.DEBUG else None
+        "features": [
+            "User Authentication",
+            "User Management",
+            "Profile Management",
+            "Activity Logging",
+            "Rate Limiting",
+        ],
+        "docs_url": f"{settings.API_V1_STR}/docs" if settings.DEBUG else None,
     }
 
 
 @app.get("/health")
 async def health_check():
-    """Health check endpoint"""
+    """Health check endpoint for monitoring"""
     try:
         db_status = test_connection()
-        
+
         return {
+            "success": True,
             "status": "healthy" if db_status else "degraded",
-            "database": "connected" if db_status else "disconnected",
+            "checks": {
+                "database": "connected" if db_status else "disconnected",
+                "app": "running",
+            },
             "app_name": settings.APP_NAME,
             "environment": settings.ENVIRONMENT,
             "version": "1.0.0",
-            "debug": settings.DEBUG
+            "debug": settings.DEBUG,
         }
     except Exception as e:
+        logger.error(f"Health check failed: {e}")
         return JSONResponse(
             status_code=503,
             content={
+                "success": False,
                 "status": "unhealthy",
-                "error": str(e),
-                "app_name": settings.APP_NAME
-            }
+                "error": "Service unavailable",
+                "reason": str(e),
+                "app_name": settings.APP_NAME,
+            },
         )
 
 
-# Simple test endpoint
-@app.get(f"{settings.API_V1_STR}/test")
-async def test_endpoint():
-    """Test endpoint"""
-    return {
-        "message": "API is working!",
-        "timestamp": "2024-01-01T00:00:00Z",
-        "database_status": test_connection()
-    }
-
-
-# Include API routes (will be added later)
-# app.include_router(api_router, prefix=settings.API_V1_STR)
+# Include API routes
+app.include_router(api_router, prefix=settings.API_V1_STR)
