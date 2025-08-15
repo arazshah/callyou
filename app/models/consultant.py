@@ -41,6 +41,25 @@ class WorkingMode(str, enum.Enum):
     COMPANY = "company"         # شرکتی
 
 
+# Many-to-many relationship table between consultants and categories
+consultant_categories = Table(
+    "consultant_categories",
+    BaseModel.metadata,
+    Column(
+        "consultant_id",
+        UUID(as_uuid=True),
+        ForeignKey("consultants.id", ondelete="CASCADE"),
+        primary_key=True
+    ),
+    Column(
+        "category_id",
+        UUID(as_uuid=True),
+        ForeignKey("consultation_categories.id", ondelete="CASCADE"),
+        primary_key=True
+    )
+)
+
+
 class Consultant(BaseModel):
     """
     Consultant profile and information
@@ -105,11 +124,20 @@ class Consultant(BaseModel):
     # Metadata
     last_activity = Column(DateTime(timezone=True), nullable=True)
 
+    # Relationships
+    categories = relationship(
+        "ConsultationCategory",
+        secondary=consultant_categories,
+        back_populates="consultants"
+    )
+
     def update_rating(self, new_rating: float) -> None:
         """Update average rating"""
-        total_score = self.average_rating * self.total_ratings + new_rating
+        # Use Decimal for consistent precision
+        new_rating_decimal = Decimal(str(new_rating))
+        total_score = self.average_rating * self.total_ratings + new_rating_decimal
         self.total_ratings += 1
-        self.average_rating = Decimal(total_score) / self.total_ratings
+        self.average_rating = total_score / self.total_ratings
 
     def is_available(self) -> bool:
         """Check if consultant is available for new sessions"""
@@ -156,17 +184,22 @@ class ConsultationCategory(BaseModel):
     is_active = Column(Boolean, default=True, nullable=False)
 
     # Relationships
-    parent = relationship("ConsultationCategory", remote_side="ConsultationCategory.id", back_populates="children")
-    children = relationship("ConsultationCategory", back_populates="parent", cascade="all, delete-orphan")
+    parent = relationship(
+        "ConsultationCategory",
+        remote_side="ConsultationCategory.id",
+        back_populates="children"
+    )
+    children = relationship(
+        "ConsultationCategory",
+        back_populates="parent",
+        cascade="all, delete-orphan"
+    )
+
+    consultants = relationship(
+        "Consultant",
+        secondary=consultant_categories,
+        back_populates="categories"
+    )
 
     def __repr__(self):
         return f"<ConsultationCategory(name={self.name})>"
-
-
-# Many-to-many relationship between consultants and categories
-consultant_categories = Table(
-    "consultant_categories",
-    BaseModel.metadata,
-    Column("consultant_id", UUID(as_uuid=True), ForeignKey("consultants.id", ondelete="CASCADE"), primary_key=True),
-    Column("category_id", UUID(as_uuid=True), ForeignKey("consultation_categories.id", ondelete="CASCADE"), primary_key=True)
-)

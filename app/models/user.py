@@ -103,14 +103,6 @@ class User(BaseModel):
         cascade="all, delete-orphan"
     )
 
-    # Relationship to Wallet (one-to-one)
-    wallet = relationship(
-        "Wallet",
-        back_populates="user",
-        uselist=False,
-        cascade="all, delete-orphan"
-    )
-
     # Client: Consultation requests created by the user
     client_requests = relationship(
         "ConsultationRequest",
@@ -356,3 +348,24 @@ ActivityLog.user = relationship(
     "User",
     back_populates="activity_logs",
 )
+
+# Define relationships after all models are created
+User.profile = relationship(
+ "UserProfile", 
+ back_populates="user", 
+ uselist=False, 
+ cascade="all, delete-orphan"
+)
+
+User.activity_logs = relationship(
+ "ActivityLog", 
+ back_populates="user", 
+ cascade="all, delete-orphan"
+)
+
+UserProfile.user = relationship("User", back_populates="profile")
+ActivityLog.user = relationship("User", back_populates="activity_logs")
+
+# These will be added when we import other models
+# User.consultant = relationship("Consultant", back_populates="user", uselist=False)
+# User.wallet = relationship("Wallet", back_populates="user", uselist=False)
