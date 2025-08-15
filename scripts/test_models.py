@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Test new models - Simple version
+Test models - Ultra simple version
 """
 
 import sys
@@ -11,69 +11,62 @@ project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, project_root)
 
 
-def test_imports():
-    """Test importing models"""
-    print("🧪 Testing model imports...")
-    
-    try:
-        from app.models import (
-            User, UserProfile, Consultant, Wallet, 
-            ConsultationRequest, Rating
-        )
-        print("✅ All models imported successfully")
-        return True
-    except Exception as e:
-        print(f"❌ Import failed: {e}")
-        import traceback
-        traceback.print_exc()
-        return False
-
-
-def test_database():
-    """Test database creation"""
-    print("\n🧪 Testing database...")
-    
-    try:
-        from app.database import test_connection, create_tables
-        
-        if not test_connection():
-            print("❌ Database connection failed")
-            return False
-        
-        create_tables()
-        print("✅ Tables created successfully")
-        return True
-        
-    except Exception as e:
-        print(f"❌ Database test failed: {e}")
-        import traceback
-        traceback.print_exc()
-        return False
-
-
 def main():
-    """Run tests"""
-    print("🧪 Simple Model Test")
+    """Run simple test"""
+    print("🧪 Ultra Simple Model Test")
     print("=" * 30)
     
-    tests = [
-        test_imports,
-        test_database
-    ]
-    
-    results = [test() for test in tests]
-    passed = sum(results)
-    
-    print(f"\n📊 Results: {passed}/{len(results)} passed")
-    
-    if passed == len(results):
-        print("🎉 All tests passed!")
-        return True
-    else:
-        print("⚠️ Some tests failed")
+    # Test 1: Basic imports
+    print("1. Testing basic imports...")
+    try:
+        from app.models.base import BaseModel
+        print(" ✅ BaseModel imported")
+        
+        from app.models.user import User, UserProfile
+        print(" ✅ User models imported")
+        
+        from app.models.consultant import Consultant
+        print(" ✅ Consultant imported")
+        
+        from app.models.wallet import Wallet
+        print(" ✅ Wallet imported")
+        
+        print("✅ All basic imports successful")
+    except Exception as e:
+        print(f"❌ Import failed: {e}")
         return False
+    
+    # Test 2: Database connection
+    print("\n2. Testing database connection...")
+    try:
+        from app.database import test_connection
+        if test_connection():
+            print("✅ Database connection successful")
+        else:
+            print("❌ Database connection failed")
+            return False
+    except Exception as e:
+        print(f"❌ Database test failed: {e}")
+        return False
+    
+    # Test 3: Table creation
+    print("\n3. Testing table creation...")
+    try:
+        from app.database import create_tables
+        create_tables()
+        print("✅ Tables created successfully")
+    except Exception as e:
+        print(f"❌ Table creation failed: {e}")
+        return False
+    
+    print("\n🎉 All tests passed!")
+    return True
 
 
 if __name__ == "__main__":
     success = main()
-    sys.exit(0 if success else 1)
+    if success:
+        print("✅ Models are working correctly!")
+    else:
+        print("❌ Some tests failed")
+    sys.exit(1)

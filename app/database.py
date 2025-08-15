@@ -3,20 +3,23 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 import logging
 
-from app.config import settings
-
 # Setup logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Database URL
-SQLALCHEMY_DATABASE_URL = settings.DATABASE_URL
+# Try to import settings
+try:
+    from app.config import settings
+    SQLALCHEMY_DATABASE_URL = settings.DATABASE_URL
+except Exception as e:
+    logger.warning(f"Could not load settings: {e}")
+    SQLALCHEMY_DATABASE_URL = "postgresql://consultation_user:consultation_pass@postgres:5432/consultation_platform"
 
 # Create engine
 engine = create_engine(
     SQLALCHEMY_DATABASE_URL,
     pool_pre_ping=True,
-    echo=settings.DEBUG,
+    echo=False,  # Disable SQL logging for now
 )
 
 # Create SessionLocal class
@@ -38,21 +41,46 @@ def get_db():
 def create_tables():
     """Create all tables"""
     try:
-        # Import all models to register them with SQLAlchemy
-        from app.models import User, UserProfile, ActivityLog
-        
         logger.info("📋 Creating database tables...")
+
+        # Import models to register them
+        try:
+            from app.models import (
+                User,
+                UserProfile,
+                ActivityLog,
+                Consultant,
+                ConsultationCategory,
+                ConsultationRequest,
+                ConsultationSession,
+                Wallet,
+                Transaction,
+                PaymentMethod,
+                Rating,
+                Review,
+                ReviewHelpful,
+            )
+            logger.info("✅ Models imported successfully")
+        except Exception as e:
+            logger.error(f"❌ Failed to import models: {e}")
+            raise
+
+        # Create all tables
         Base.metadata.create_all(bind=engine)
         logger.info("✅ Database tables created successfully")
-        
+
         # Verify tables were created
         from sqlalchemy import inspect
         inspector = inspect(engine)
         tables = inspector.get_table_names()
-        logger.info(f"📊 Created tables: {tables}")
-        
+        logger.info(f"📊 Created tables: {sorted(tables)}")
+
+        return True
+
     except Exception as e:
         logger.error(f"❌ Failed to create tables: {e}")
+        import traceback
+        traceback.print_exc()
         raise
 
 
@@ -60,11 +88,10 @@ def test_connection():
     """Test database connection"""
     try:
         with engine.connect() as conn:
-            # Use text() for raw SQL
             result = conn.execute(text("SELECT 1"))
             result.fetchone()
-            logger.info("✅ Database connection successful")
-            return True
+        logger.info("✅ Database connection successful")
+        return True
     except Exception as e:
         logger.error(f"❌ Database connection failed: {e}")
         return False

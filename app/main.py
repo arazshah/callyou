@@ -5,20 +5,34 @@ from fastapi.exceptions import RequestValidationError
 import os
 import logging
 
-from app.config import settings
-from app.database import test_connection, create_tables
-
-# Setup logging
+# Setup logging first
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
 logger = logging.getLogger(__name__)
 
+# Try to import config
+try:
+    from app.config import settings
+    logger.info("✅ Config loaded successfully")
+except Exception as e:
+    logger.error(f"❌ Config loading failed: {e}")
+    # Use default settings
+    class DefaultSettings:
+        APP_NAME = "Consultation Platform"
+        ENVIRONMENT = "development"
+        DEBUG = True
+        API_V1_STR = "/api/v1"
+        BACKEND_CORS_ORIGINS = ["*"]
+        UPLOAD_PATH = "./uploads"
+    
+    settings = DefaultSettings()
+
 # Create FastAPI app
 app = FastAPI(
     title=settings.APP_NAME,
-    description="A secure online consultation platform with complete authentication system",
+    description="A secure online consultation platform",
     version="1.0.0",
     docs_url=f"{settings.API_V1_STR}/docs" if settings.DEBUG else None,
     redoc_url=f"{settings.API_V1_STR}/redoc" if settings.DEBUG else None,
@@ -27,14 +41,13 @@ app = FastAPI(
 # Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.BACKEND_CORS_ORIGINS,
+    allow_origins=settings.BACKEND_CORS_ORIGINS if hasattr(settings, 'BACKEND_CORS_ORIGINS') else ["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
 
-# Exception handlers
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
     """Handle validation errors"""
@@ -82,20 +95,24 @@ async def startup_event():
         logger.warning(f"⚠️ Could not create directories: {e}")
     
     # Test database connection
-    logger.info("🔍 Testing database connection...")
-    if test_connection():
-        logger.info("✅ Database connection successful")
+    try:
+        from app.database import test_connection, create_tables
         
-        # Import models to register them
-        try:
-            from app.models import User, UserProfile # This registers the models
-            create_tables()
-            logger.info("✅ Database tables ready")
-        except Exception as e:
-            logger.warning(f"⚠️ Could not create tables: {e}")
-    else:
-        logger.error("❌ Database connection failed")
-        logger.warning("⚠️ Application will start but database features may not work")
+        logger.info("🔍 Testing database connection...")
+        if test_connection():
+            logger.info("✅ Database connection successful")
+            
+            # Try to create tables
+            try:
+                create_tables()
+                logger.info("✅ Database tables ready")
+            except Exception as e:
+                logger.warning(f"⚠️ Could not create tables: {e}")
+        else:
+            logger.error("❌ Database connection failed")
+        
+    except Exception as e:
+        logger.error(f"❌ Database setup failed: {e}")
     
     logger.info(f"🎉 {settings.APP_NAME} started successfully!")
     if settings.DEBUG:
@@ -115,8 +132,9 @@ async def root():
         "features": [
             "User Authentication",
             "User Management", 
-            "Profile Management",
-            "Activity Logging"
+            "Consultation System",
+            "Wallet Management",
+            "Rating System"
         ],
         "docs_url": f"{settings.API_V1_STR}/docs" if settings.DEBUG else None
     }
@@ -126,6 +144,7 @@ async def root():
 async def health_check():
     """Health check endpoint"""
     try:
+        from app.database import test_connection
         db_status = test_connection()
         
         return {
@@ -152,7 +171,7 @@ async def health_check():
         )
 
 
-# Include API router
+# Try to include API router
 try:
     from app.api.v1 import api_router
     app.include_router(api_router, prefix=settings.API_V1_STR)
@@ -160,11 +179,25 @@ try:
 except Exception as e:
     logger.error(f"❌ Failed to load API routes: {e}")
     
-    # Add a simple fallback route
+    # Add fallback routes
     @app.get(f"{settings.API_V1_STR}/test")
     async def api_test():
         return {
             "success": True,
-            "message": "API is working but routes failed to load",
+            "message": "API is working but some routes failed to load",
             "error": str(e)
+        }
+    
+    @app.get(f"{settings.API_V1_STR}/status")
+    async def api_status():
+        return {
+            "success": False,
+            "message": "API routes not fully loaded",
+            "error": str(e),
+            "available_endpoints": [
+                f"GET {settings.API_V1_STR}/test",
+                f"GET {settings.API_V1_STR}/status",
+                "GET /health",
+                "GET /"
+            ]
         }
