@@ -10,33 +10,23 @@ services:
       POSTGRES_DB: consultation_platform
       POSTGRES_USER: consultation_user
       POSTGRES_PASSWORD: consultation_password
-      POSTGRES_HOST_AUTH_METHOD: trust
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./scripts/init_db.sql:/docker-entrypoint-initdb.d/init_db.sql
-    networks:
-      - consultation_network
-
-  # Redis for caching and sessions
-  redis:
-    image: redis:7-alpine
-    container_name: consultation_redis
-    restart: unless-stopped
-    ports:
-      - "6379:6379"
-    volumes:
-      - redis_data:/data
-    command: redis-server --appendonly yes --requirepass redis_password
-    networks:
-      - consultation_network
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U consultation_user -d consultation_platform",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   # FastAPI Application
   app:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    build: .
     container_name: consultation_app
     restart: unless-stopped
     ports:
@@ -47,98 +37,13 @@ services:
       - ./logs:/app/logs
     environment:
       - DATABASE_URL=postgresql://consultation_user:consultation_password@postgres:5432/consultation_platform
-      - REDIS_URL=redis://:redis_password@redis:6379/0
       - ENVIRONMENT=development
+      - DEBUG=true
+      - SECRET_KEY=development-secret-key-change-in-production
     depends_on:
-      - postgres
-      - redis
-    networks:
-      - consultation_network
+      postgres:
+        condition: service_healthy
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
-
-  # Celery Worker
-  celery_worker:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: consultation_celery
-    restart: unless-stopped
-    volumes:
-      - .:/app
-      - ./uploads:/app/uploads
-      - ./logs:/app/logs
-    environment:
-      - DATABASE_URL=postgresql://consultation_user:consultation_password@postgres:5432/consultation_platform
-      - REDIS_URL=redis://:redis_password@redis:6379/0
-      - ENVIRONMENT=development
-    depends_on:
-      - postgres
-      - redis
-    networks:
-      - consultation_network
-    command: celery -A app.tasks.celery_app worker --loglevel=info
-
-  # Celery Beat (Scheduler)
-  celery_beat:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: consultation_celery_beat
-    restart: unless-stopped
-    volumes:
-      - .:/app
-      - ./logs:/app/logs
-    environment:
-      - DATABASE_URL=postgresql://consultation_user:consultation_password@postgres:5432/consultation_platform
-      - REDIS_URL=redis://:redis_password@redis:6379/0
-      - ENVIRONMENT=development
-    depends_on:
-      - postgres
-      - redis
-    networks:
-      - consultation_network
-    command: celery -A app.tasks.celery_app beat --loglevel=info
-
-  # Flower (Celery Monitoring)
-  flower:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: consultation_flower
-    restart: unless-stopped
-    ports:
-      - "5555:5555"
-    environment:
-      - REDIS_URL=redis://:redis_password@redis:6379/0
-    depends_on:
-      - redis
-    networks:
-      - consultation_network
-    command: celery -A app.tasks.celery_app flower --port=5555
-
-  # pgAdmin (Database Management)
-  pgadmin:
-    image: dpage/pgadmin4:latest
-    container_name: consultation_pgadmin
-    restart: unless-stopped
-    environment:
-      PGADMIN_DEFAULT_EMAIL: admin@consultation.com
-      PGADMIN_DEFAULT_PASSWORD: admin_password
-      PGADMIN_CONFIG_SERVER_MODE: "False"
-    ports:
-      - "5050:80"
-    volumes:
-      - pgadmin_data:/var/lib/pgadmin
-    depends_on:
-      - postgres
-    networks:
-      - consultation_network
 
 volumes:
   postgres_data:
-  redis_data:
-  pgadmin_data:
-
-networks:
-  consultation_network:
-    driver: bridge
