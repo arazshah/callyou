@@ -1,0 +1,1136 @@
+<!DOCTYPE html>
+<html lang="fa"
+      dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+    <title>مشاوران برتر - سامانه مشاوره آنلاین</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Vazir', Tahoma, sans-serif;
+            background: #f5f7fa;
+        }
+
+        /* هدر صفحه */
+        .page-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 60px 0;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .page-header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="20" cy="20" r="2" fill="rgba(255,255,255,0.1)"/><circle cx="80" cy="40" r="3" fill="rgba(255,255,255,0.1)"/><circle cx="40" cy="80" r="2" fill="rgba(255,255,255,0.1)"/></svg>');
+        }
+
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 30px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .page-title {
+            font-size: 3rem;
+            margin-bottom: 15px;
+        }
+
+        .page-subtitle {
+            font-size: 1.3rem;
+            opacity: 0.9;
+            margin-bottom: 30px;
+        }
+
+        .header-stats {
+            display: flex;
+            justify-content: center;
+            gap: 50px;
+            margin-top: 40px;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: 700;
+        }
+
+        .stat-label {
+            opacity: 0.9;
+            margin-top: 5px;
+        }
+
+        /* بنر تبلیغاتی بالا */
+        .top-banner {
+            background: linear-gradient(45deg, #ff6b6b, #ee5a24);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .banner-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .banner-text {
+            flex: 1;
+        }
+
+        .banner-title {
+            font-size: 1.5rem;
+            margin-bottom: 5px;
+        }
+
+        .banner-subtitle {
+            opacity: 0.9;
+        }
+
+        .banner-cta {
+            background: white;
+            color: #ff6b6b;
+            padding: 12px 25px;
+            border: none;
+            border-radius: 25px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .banner-cta:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        /* کانتینر اصلی */
+        .main-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 30px;
+        }
+
+        /* بخش فیلتر و جستجو */
+        .search-filter-section {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            margin-bottom: 30px;
+        }
+
+        .search-bar {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .search-input {
+            flex: 1;
+            padding: 15px 20px;
+            border: 2px solid #e0e0e0;
+            border-radius: 50px;
+            font-size: 1rem;
+            transition: all 0.3s;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .search-btn {
+            padding: 15px 30px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .search-btn:hover {
+            background: #5a67d8;
+            transform: translateY(-2px);
+        }
+
+        .filter-tabs {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .filter-tab {
+            padding: 10px 20px;
+            background: #f8f9fa;
+            border: 2px solid #e0e0e0;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 0.95rem;
+        }
+
+        .filter-tab:hover,
+        .filter-tab.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        /* بنر تبلیغاتی وسط */
+        .middle-banner {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            padding: 40px;
+            border-radius: 15px;
+            text-align: center;
+            margin: 30px 0;
+            position: relative;
+        }
+
+        .premium-badge {
+            position: absolute;
+            top: -10px;
+            right: 30px;
+            background: #ffd700;
+            color: #333;
+            padding: 5px 15px;
+            border-radius: 15px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        /* شبکه مشاوران */
+        .consultants-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 25px;
+            margin-bottom: 40px;
+        }
+
+        .consultant-card {
+            background: white;
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .consultant-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+        }
+
+        .consultant-card.featured {
+            border: 3px solid #ffd700;
+            background: linear-gradient(135deg, #fff 0%, #fffbf0 100%);
+        }
+
+        .consultant-card.sponsored {
+            border: 3px solid #667eea;
+        }
+
+        .card-badge {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            padding: 5px 12px;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .badge-featured {
+            background: #ffd700;
+            color: #333;
+        }
+
+        .badge-sponsored {
+            background: #667eea;
+            color: white;
+        }
+
+        .badge-premium {
+            background: #ff6b6b;
+            color: white;
+        }
+
+        .consultant-header {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .consultant-avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 4px solid #f0f0f0;
+        }
+
+        .consultant-info {
+            flex: 1;
+        }
+
+        .consultant-name {
+            font-size: 1.3rem;
+            color: #333;
+            margin-bottom: 5px;
+            font-weight: 600;
+        }
+
+        .consultant-title {
+            color: #666;
+            margin-bottom: 10px;
+        }
+
+        .consultant-rating {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        .rating-stars {
+            color: #ffc107;
+            font-size: 1.1rem;
+        }
+
+        .rating-text {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .consultant-badges {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .skill-badge {
+            background: #e3f2fd;
+            color: #1976d2;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+        }
+
+        .consultant-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin: 20px 0;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+
+        .stat {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #667eea;
+        }
+
+        .stat-label {
+            font-size: 0.8rem;
+            color: #666;
+            margin-top: 2px;
+        }
+
+        .consultant-description {
+            color: #555;
+            line-height: 1.6;
+            margin-bottom: 20px;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .consultant-pricing {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-radius: 10px;
+        }
+
+        .price-info {
+            text-align: center;
+        }
+
+        .price-label {
+            font-size: 0.8rem;
+            color: #666;
+        }
+
+        .price-value {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #333;
+        }
+
+        .consultant-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .action-btn {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 0.95rem;
+            transition: all 0.3s;
+            font-family: inherit;
+            font-weight: 500;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5a67d8;
+            transform: translateY(-2px);
+        }
+
+        .btn-outline {
+            background: white;
+            color: #667eea;
+            border: 2px solid #667eea;
+        }
+
+        .btn-outline:hover {
+            background: #f8f9ff;
+        }
+
+        /* بنر تبلیغاتی پایین */
+        .bottom-banner {
+            background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+            padding: 40px;
+            border-radius: 15px;
+            text-align: center;
+            margin: 40px 0;
+        }
+
+        .bottom-banner h3 {
+            color: #333;
+            font-size: 1.8rem;
+            margin-bottom: 15px;
+        }
+
+        .bottom-banner p {
+            color: #666;
+            margin-bottom: 25px;
+        }
+
+        .cta-button {
+            background: #667eea;
+            color: white;
+            padding: 15px 40px;
+            border: none;
+            border-radius: 50px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .cta-button:hover {
+            background: #5a67d8;
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+        }
+
+        /* صفحه‌بندی */
+        .pagination {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin: 40px 0;
+        }
+
+        .page-btn {
+            width: 45px;
+            height: 45px;
+            border: 2px solid #e0e0e0;
+            background: white;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+        }
+
+        .page-btn:hover,
+        .page-btn.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        /* بنر جانبی شناور */
+        .floating-ad {
+            position: fixed;
+            left: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 120px;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+            z-index: 1000;
+            transition: all 0.3s;
+        }
+
+        .floating-ad:hover {
+            transform: translateY(-50%) scale(1.05);
+        }
+
+        .ad-content {
+            padding: 20px;
+            text-align: center;
+        }
+
+        .ad-icon {
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+
+        .ad-text {
+            font-size: 0.9rem;
+            color: #333;
+            margin-bottom: 15px;
+        }
+
+        .ad-button {
+            background: #ff6b6b;
+            color: white;
+            padding: 8px 15px;
+            border: none;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            cursor: pointer;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .consultants-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .header-stats {
+                flex-direction: column;
+                gap: 20px;
+            }
+
+            .search-bar {
+                flex-direction: column;
+            }
+
+            .banner-content {
+                flex-direction: column;
+                gap: 20px;
+                text-align: center;
+            }
+
+            .floating-ad {
+                display: none;
+            }
+
+            .consultant-stats {
+                grid-template-columns: 1fr;
+            }
+
+            .consultant-actions {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- بنر تبلیغاتی بالا -->
+    <div class="top-banner">
+        <div class="banner-content">
+            <div class="banner-text">
+                <div class="banner-title">🎯 مشاور می‌خواهید؟ اینجا بهترین‌ها هستند!</div>
+                <div class="banner-subtitle">بیش از 500 مشاور متخصص در انتظار شما</div>
+            </div>
+            <button class="banner-cta"
+                    onclick="scrollToConsultants()">
+                مشاهده مشاوران
+            </button>
+        </div>
+    </div>
+
+    <!-- هدر صفحه -->
+    <div class="page-header">
+        <div class="header-content">
+            <h1 class="page-title">🌟 مشاوران برتر</h1>
+            <p class="page-subtitle">بهترین متخصصان در خدمت شما</p>
+
+            <div class="header-stats">
+                <div class="stat-item">
+                    <div class="stat-number">500+</div>
+                    <div class="stat-label">مشاور متخصص</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">50+</div>
+                    <div class="stat-label">حوزه تخصصی</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">98%</div>
+                    <div class="stat-label">رضایت مشتریان</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">24/7</div>
+                    <div class="stat-label">پشتیبانی</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- کانتینر اصلی -->
+    <div class="main-container">
+        <!-- بخش جستجو و فیلتر -->
+        <div class="search-filter-section">
+            <div class="search-bar">
+                <input type="text"
+                       class="search-input"
+                       placeholder="جستجو مشاور، تخصص، یا موضوع...">
+                <button class="search-btn">🔍 جستجو</button>
+            </div>
+
+            <div class="filter-tabs">
+                <div class="filter-tab active"
+                     data-category="all">همه مشاوران</div>
+                <div class="filter-tab"
+                     data-category="tech">فناوری اطلاعات</div>
+                <div class="filter-tab"
+                     data-category="business">کسب و کار</div>
+                <div class="filter-tab"
+                     data-category="marketing">بازاریابی</div>
+                <div class="filter-tab"
+                     data-category="finance">مالی</div>
+                <div class="filter-tab"
+                     data-category="legal">حقوقی</div>
+                <div class="filter-tab"
+                     data-category="health">سلامت</div>
+                <div class="filter-tab"
+                     data-category="education">آموزش</div>
+                <div class="filter-tab"
+                     data-category="psychology">روانشناسی</div>
+            </div>
+        </div>
+
+        <!-- بنر تبلیغاتی وسط -->
+        <div class="middle-banner">
+            <div class="premium-badge">ویژه</div>
+            <h3>💎 مشاوره VIP با بهترین متخصصان</h3>
+            <p>دسترسی اولویت‌دار، جلسات طولانی‌تر، پشتیبانی 24 ساعته</p>
+            <button class="cta-button">اطلاعات بیشتر</button>
+        </div>
+
+        <!-- شبکه مشاوران -->
+        <div class="consultants-grid"
+             id="consultantsGrid">
+            <!-- مشاور ویژه 1 -->
+            <div class="consultant-card featured">
+                <div class="card-badge badge-featured">⭐ ویژه</div>
+                <div class="consultant-header">
+                    <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='80'%3E%3Crect width='80' height='80' fill='%23667eea'/%3E%3Ctext x='50%25' y='50%25' font-size='35' fill='white' text-anchor='middle' dominant-baseline='middle'%3E👨‍💼%3C/text%3E%3C/svg%3E"
+                         alt="مشاور"
+                         class="consultant-avatar">
+                    <div class="consultant-info">
+                        <h3 class="consultant-name">دکتر علی محمدی</h3>
+                        <p class="consultant-title">متخصص معماری نرم‌افزار</p>
+                        <div class="consultant-rating">
+                            <span class="rating-stars">⭐⭐⭐⭐⭐</span>
+                            <span class="rating-text">4.9 (523 نظر)</span>
+                        </div>
+                        <div class="consultant-badges">
+                            <span class="skill-badge">معماری نرم‌افزار</span>
+                            <span class="skill-badge">Cloud Computing</span>
+                            <span class="skill-badge">DevOps</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="consultant-stats">
+                    <div class="stat">
+                        <div class="stat-value">15</div>
+                        <div class="stat-label">سال سابقه</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-value">523</div>
+                        <div class="stat-label">مشاوره موفق</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-value">24h</div>
+                        <div class="stat-label">پاسخگویی</div>
+                    </div>
+                </div>
+
+                <p class="consultant-description">
+                    با بیش از 15 سال تجربه در حوزه توسعه نرم‌افزار و معماری سیستم‌های پیچیده،
+                    آماده ارائه بهترین راه‌حل‌ها برای چالش‌های فنی شما هستم.
+                </p>
+
+                <div class="consultant-pricing">
+                    <div class="price-info">
+                        <div class="price-label">مشاوره تلفنی</div>
+                        <div class="price-value">500,000 تومان</div>
+                    </div>
+                    <div class="price-info">
+                        <div class="price-label">مشاوره ویدیویی</div>
+                        <div class="price-value">750,000 تومان</div>
+                    </div>
+                    <div class="price-info">
+                        <div class="price-label">پروژه‌ای</div>
+                        <div class="price-value">توافقی</div>
+                    </div>
+                </div>
+
+                <div class="consultant-actions">
+                    <button class="action-btn btn-primary">📞 رزرو مشاوره</button>
+                    <button class="action-btn btn-outline">👤 مشاهده پروفایل</button>
+                </div>
+            </div>
+
+            <!-- مشاور اسپانسر شده -->
+            <div class="consultant-card sponsored">
+                <div class="card-badge badge-sponsored">📢 تبلیغ</div>
+                <div class="consultant-header">
+                    <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='80'%3E%3Crect width='80' height='80' fill='%23e91e63'/%3E%3Ctext x='50%25' y='50%25' font-size='35' fill='white' text-anchor='middle' dominant-baseline='middle'%3E👩‍💼%3C/text%3E%3C/svg%3E"
+                         alt="مشاور"
+                         class="consultant-avatar">
+                    <div class="consultant-info">
+                        <h3 class="consultant-name">دکتر سارا کریمی</h3>
+                        <p class="consultant-title">مشاور بازاریابی دیجیتال</p>
+                        <div class="consultant-rating">
+                            <span class="rating-stars">⭐⭐⭐⭐⭐</span>
+                            <span class="rating-text">4.8 (342 نظر)</span>
+                        </div>
+                        <div class="consultant-badges">
+                            <span class="skill-badge">دیجیتال مارکتینگ</span>
+                            <span class="skill-badge">SEO</span>
+                            <span class="skill-badge">تبلیغات</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="consultant-stats">
+                    <div class="stat">
+                        <div class="stat-value">12</div>
+                        <div class="stat-label">سال سابقه</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-value">342</div>
+                        <div class="stat-label">مشاوره موفق</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-value">2h</div>
+                        <div class="stat-label">پاسخگویی</div>
+                    </div>
+                </div>
+
+                <p class="consultant-description">
+                    متخصص بازاریابی دیجیتال با تجربه کار با بیش از 200 برند معتبر.
+                    کمک به رشد فروش آنلاین و بهبود حضور دیجیتال کسب‌وکارها.
+                </p>
+
+                <div class="consultant-pricing">
+                    <div class="price-info">
+                        <div class="price-label">مشاوره تلفنی</div>
+                        <div class="price-value">400,000 تومان</div>
+                    </div>
+                    <div class="price-info">
+                        <div class="price-label">مشاوره ویدیویی</div>
+                        <div class="price-value">600,000 تومان</div>
+                    </div>
+                    <div class="price-info">
+                        <div class="price-label">پکیج کامل</div>
+                        <div class="price-value">2,000,000 تومان</div>
+                    </div>
+                </div>
+
+                <div class="consultant-actions">
+                    <button class="action-btn btn-primary">📞 رزرو مشاوره</button>
+                    <button class="action-btn btn-outline">👤 مشاهده پروفایل</button>
+                </div>
+            </div>
+
+            <!-- مشاور عادی 1 -->
+            <div class="consultant-card">
+                <div class="consultant-header">
+                    <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='80'%3E%3Crect width='80' height='80' fill='%234caf50'/%3E%3Ctext x='50%25' y='50%25' font-size='35' fill='white' text-anchor='middle' dominant-baseline='middle'%3E👨‍⚕️%3C/text%3E%3C/svg%3E"
+                         alt="مشاور"
+                         class="consultant-avatar">
+                    <div class="consultant-info">
+                        <h3 class="consultant-name">دکتر محمد رضایی</h3>
+                        <p class="consultant-title">مشاور مالی و سرمایه‌گذاری</p>
+                        <div class="consultant-rating">
+                            <span class="rating-stars">⭐⭐⭐⭐⭐</span>
+                            <span class="rating-text">4.7 (189 نظر)</span>
+                        </div>
+                        <div class="consultant-badges">
+                            <span class="skill-badge">سرمایه‌گذاری</span>
+                            <span class="skill-badge">بورس</span>
+                            <span class="skill-badge">مالیات</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="consultant-stats">
+                    <div class="stat">
+                        <div class="stat-value">10</div>
+                        <div class="stat-label">سال سابقه</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-value">189</div>
+                        <div class="stat-label">مشاوره موفق</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-value">4h</div>
+                        <div class="stat-label">پاسخگویی</div>
+                    </div>
+                </div>
+
+                <p class="consultant-description">
+                    مشاور مالی با سابقه کار در بانک‌های معتبر و شرکت‌های سرمایه‌گذاری.
+                    تخصص در برنامه‌ریزی مالی شخصی و راهنمایی سرمایه‌گذاری.
+                </p>
+
+                <div class="consultant-pricing">
+                    <div class="price-info">
+                        <div class="price-label">مشاوره تلفنی</div>
+                        <div class="price-value">300,000 تومان</div>
+                    </div>
+                    <div class="price-info">
+                        <div class="price-label">مشاوره ویدیویی</div>
+                        <div class="price-value">450,000 تومان</div>
+                    </div>
+                    <div class="price-info">
+                        <div class="price-label">پکیج ماهانه</div>
+                        <div class="price-value">1,500,000 تومان</div>
+                    </div>
+                </div>
+
+                <div class="consultant-actions">
+                    <button class="action-btn btn-primary">📞 رزرو مشاوره</button>
+                    <button class="action-btn btn-outline">👤 مشاهده پروفایل</button>
+                </div>
+            </div>
+
+            <!-- مشاور پریمیوم -->
+            <div class="consultant-card">
+                <div class="card-badge badge-premium">💎 پریمیوم</div>
+                <div class="consultant-header">
+                    <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='80'%3E%3Crect width='80' height='80' fill='%23ff9800'/%3E%3Ctext x='50%25' y='50%25' font-size='35' fill='white' text-anchor='middle' dominant-baseline='middle'%3E👩‍⚖️%3C/text%3E%3C/svg%3E"
+                         alt="مشاور"
+                         class="consultant-avatar">
+                    <div class="consultant-info">
+                        <h3 class="consultant-name">دکتر زهرا احمدی</h3>
+                        <p class="consultant-title">وکیل و مشاور حقوقی</p>
+                        <div class="consultant-rating">
+                            <span class="rating-stars">⭐⭐⭐⭐⭐</span>
+                            <span class="rating-text">4.9 (267 نظر)</span>
+                        </div>
+                        <div class="consultant-badges">
+                            <span class="skill-badge">حقوق تجاری</span>
+                            <span class="skill-badge">قراردادها</span>
+                            <span class="skill-badge">مالکیت فکری</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="consultant-stats">
+                    <div class="stat">
+                        <div class="stat-value">18</div>
+                        <div class="stat-label">سال سابقه</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-value">267</div>
+                        <div class="stat-label">مشاوره موفق</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-value">1h</div>
+                        <div class="stat-label">پاسخگویی</div>
+                    </div>
+                </div>
+
+                <p class="consultant-description">
+                    وکیل پایه یک دادگستری با تخصص در حقوق تجاری و قراردادهای بین‌المللی.
+                    مشاوره در امور حقوقی شرکت‌ها و کسب‌وکارها.
+                </p>
+
+                <div class="consultant-pricing">
+                    <div class="price-info">
+                        <div class="price-label">مشاوره تلفنی</div>
+                        <div class="price-value">600,000 تومان</div>
+                    </div>
+                    <div class="price-info">
+                        <div class="price-label">مشاوره ویدیویی</div>
+                        <div class="price-value">900,000 تومان</div>
+                    </div>
+                    <div class="price-info">
+                        <div class="price-label">مشاوره حضوری</div>
+                        <div class="price-value">1,200,000 تومان</div>
+                    </div>
+                </div>
+
+                <div class="consultant-actions">
+                    <button class="action-btn btn-primary">📞 رزرو مشاوره</button>
+                    <button class="action-btn btn-outline">👤 مشاهده پروفایل</button>
+                </div>
+            </div>
+
+            <!-- مشاور عادی 2 -->
+            <div class="consultant-card">
+                <div class="consultant-header">
+                    <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='80'%3E%3Crect width='80' height='80' fill='%239c27b0'/%3E%3Ctext x='50%25' y='50%25' font-size='35' fill='white' text-anchor='middle' dominant-baseline='middle'%3E👨‍🏫%3C/text%3E%3C/svg%3E"
+                         alt="مشاور"
+                         class="consultant-avatar">
+                    <div class="consultant-info">
+                        <h3 class="consultant-name">استاد حسین نوری</h3>
+                        <p class="consultant-title">مشاور آموزشی و کاریابی</p>
+                        <div class="consultant-rating">
+                            <span class="rating-stars">⭐⭐⭐⭐⭐</span>
+                            <span class="rating-text">4.6 (156 نظر)</span>
+                        </div>
+                        <div class="consultant-badges">
+                            <span class="skill-badge">کاریابی</span>
+                            <span class="skill-badge">رزومه نویسی</span>
+                            <span class="skill-badge">مصاحبه</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="consultant-stats">
+                    <div class="stat">
+                        <div class="stat-value">8</div>
+                        <div class="stat-label">سال سابقه</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-value">156</div>
+                        <div class="stat-label">مشاوره موفق</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-value">6h</div>
+                        <div class="stat-label">پاسخگویی</div>
+                    </div>
+                </div>
+
+                <p class="consultant-description">
+                    مشاور آموزشی و کاریابی با تجربه کمک به بیش از 500 نفر برای یافتن شغل مناسب.
+                    تخصص در بهبود رزومه و آمادگی برای مصاحبه.
+                </p>
+
+                <div class="consultant-pricing">
+                    <div class="price-info">
+                        <div class="price-label">مشاوره تلفنی</div>
+                        <div class="price-value">250,000 تومان</div>
+                    </div>
+                    <div class="price-info">
+                        <div class="price-label">بازنگری رزومه</div>
+                        <div class="price-value">400,000 تومان</div>
+                    </div>
+                    <div class="price-info">
+                        <div class="price-label">پکیج کامل</div>
+                        <div class="price-value">800,000 تومان</div>
+                    </div>
+                </div>
+
+                <div class="consultant-actions">
+                    <button class="action-btn btn-primary">📞 رزرو مشاوره</button>
+                    <button class="action-btn btn-outline">👤 مشاهده پروفایل</button>
+                </div>
+            </div>
+
+            <!-- مشاور عادی 3 -->
+            <div class="consultant-card">
+                <div class="consultant-header">
+                    <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='80'%3E%3Crect width='80' height='80' fill='%23607d8b'/%3E%3Ctext x='50%25' y='50%25' font-size='35' fill='white' text-anchor='middle' dominant-baseline='middle'%3E👩‍🔬%3C/text%3E%3C/svg%3E"
+                         alt="مشاور"
+                         class="consultant-avatar">
+                    <div class="consultant-info">
+                        <h3 class="consultant-name">دکتر مریم صادقی</h3>
+                        <p class="consultant-title">روانشناس و مشاور خانواده</p>
+                        <div class="consultant-rating">
+                            <span class="rating-stars">⭐⭐⭐⭐⭐</span>
+                            <span class="rating-text">4.8 (298 نظر)</span>
+                        </div>
+                        <div class="consultant-badges">
+                            <span class="skill-badge">روانشناسی</span>
+                            <span class="skill-badge">مشاوره خانواده</span>
+                            <span class="skill-badge">استرس</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="consultant-stats">
+                    <div class="stat">
+                        <div class="stat-value">14</div>
+                        <div class="stat-label">سال سابقه</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-value">298</div>
+                        <div class="stat-label">مشاوره موفق</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-value">3h</div>
+                        <div class="stat-label">پاسخگویی</div>
+                    </div>
+                </div>
+
+                <p class="consultant-description">
+                    روانشناس بالینی با تخصص در مشاوره خانواده و درمان اضطراب و افسردگی.
+                    کمک به بهبود روابط و مدیریت استرس.
+                </p>
+
+                <div class="consultant-pricing">
+                    <div class="price-info">
+                        <div class="price-label">مشاوره تلفنی</div>
+                        <div class="price-value">350,000 تومان</div>
+                    </div>
+                    <div class="price-info">
+                        <div class="price-label">مشاوره ویدیویی</div>
+                        <div class="price-value">500,000 تومان</div>
+                    </div>
+                    <div class="price-info">
+                        <div class="price-label">جلسات گروهی</div>
+                        <div class="price-value">200,000 تومان</div>
+                    </div>
+                </div>
+
+                <div class="consultant-actions">
+                    <button class="action-btn btn-primary">📞 رزرو مشاوره</button>
+                    <button class="action-btn btn-outline">👤 مشاهده پروفایل</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- بنر تبلیغاتی پایین -->
+        <div class="bottom-banner">
+            <h3>🚀 مشاور هستید؟ به ما بپیوندید!</h3>
+            <p>با عضویت در بزرگ‌ترین پلتفرم مشاوره آنلاین، درآمد خود را افزایش دهید</p>
+            <button class="cta-button"
+                    onclick="showJoinModal()">عضویت مشاوران</button>
+        </div>
+
+        <!-- صفحه‌بندی -->
+        <div class="pagination">
+            <button class="page-btn">‹</button>
+            <button class="page-btn active">1</button>
+            <button class="page-btn">2</button>
+            <button class="page-btn">3</button>
+            <button class="page-btn">4</button>
+            <button class="page-btn">5</button>
+            <button class="page-btn">›</button>
+        </div>
+    </div>
+
+    <!-- بنر جانبی شناور -->
+    <div class="floating-ad">
+        <div class="ad-content">
+            <div class="ad-icon">💎</div>
+            <div class="ad-text">مشاوره VIP<br>تخفیف ویژه!</div>
+            <button class="ad-button">کلیک کنید</button>
+        </div>
+    </div>
+
+    <script>
+        // مدیریت فیلترها
+        const filterTabs = document.querySelectorAll('.filter-tab');
+        filterTabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                filterTabs.forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+
+                const category = tab.dataset.category;
+                filterConsultants(category);
+            });
+        });
+
+        function filterConsultants(category) {
+            // شبیه‌سازی فیلتر کردن
+            console.log(`فیلتر کردن بر اساس: ${category}`);
+        }
+
+        // اسکرول به بخش مشاوران
+        function scrollToConsultants() {
+            document.getElementById('consultantsGrid').scrollIntoView({
+                behavior: 'smooth'
+            });
+        }
+
+        // نمایش مودال عضویت
+        function showJoinModal() {
+            alert('صفحه ثبت‌نام مشاوران باز می‌شود...');
+        }
+
+        // مدیریت صفحه‌بندی
+        const pageButtons = document.querySelectorAll('.page-btn');
+        pageButtons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                if (!btn.textContent.includes('‹') && !btn.textContent.includes('›')) {
+                    pageButtons.forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                }
+            });
+        });
+
+        // انیمیشن بنر شناور
+        let adVisible = true;
+        setInterval(() => {
+            const floatingAd = document.querySelector('.floating-ad');
+            if (adVisible) {
+                floatingAd.style.transform = 'translateY(-50%) translateX(-20px)';
+            } else {
+                floatingAd.style.transform = 'translateY(-50%) translateX(0)';
+            }
+            adVisible = !adVisible;
+        }, 3000);
+    </script>
+</body>
+
+</html>

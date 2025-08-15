@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="fa"
+      dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+    <title>کیف پول دیجیتال - سامانه مشاوره</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Vazir', Tahoma, sans-serif;
+            background: #f5f7fa;
+        }
+
+        .wallet-container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 30px;
+        }
+
+        .wallet-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 15px;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .balance-display {
+            font-size: 3rem;
+            font-weight: 700;
+            margin: 20px 0;
+        }
+
+        .balance-actions {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 25px;
+        }
+
+        .action-btn {
+            padding: 12px 25px;
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            border-radius: 10px;
+            color: white;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.3s;
+        }
+
+        .action-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .pricing-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .pricing-card {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            transition: all 0.3s;
+            position: relative;
+        }
+
+        .pricing-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+        }
+
+        .pricing-card.popular {
+            border: 3px solid #667eea;
+        }
+
+        .popular-badge {
+            position: absolute;
+            top: -15px;
+            right: 50%;
+            transform: translateX(50%);
+            background: #667eea;
+            color: white;
+            padding: 5px 20px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+        }
+
+        .package-title {
+            font-size: 1.5rem;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .package-price {
+            font-size: 2rem;
+            color: #667eea;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+
+        .package-bonus {
+            color: #4caf50;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+
+        .package-features {
+            list-style: none;
+            margin-bottom: 25px;
+        }
+
+        .package-features li {
+            padding: 8px 0;
+            color: #666;
+        }
+
+        .package-features li::before {
+            content: '✓';
+            color: #4caf50;
+            margin-left: 10px;
+            font-weight: bold;
+        }
+
+        .buy-btn {
+            width: 100%;
+            padding: 12px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .buy-btn:hover {
+            background: #5a67d8;
+        }
+
+        .transaction-history {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .history-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+
+        .transaction-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .transaction-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .transaction-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+        }
+
+        .icon-income {
+            background: #e8f5e9;
+            color: #4caf50;
+        }
+
+        .icon-expense {
+            background: #ffebee;
+            color: #f44336;
+        }
+
+        .transaction-details h4 {
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .transaction-date {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .transaction-amount {
+            font-weight: 700;
+        }
+
+        .amount-positive {
+            color: #4caf50;
+        }
+
+        .amount-negative {
+            color: #f44336;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="wallet-container">
+        <!-- هدر کیف پول -->
+        <div class="wallet-header">
+            <h1>💰 کیف پول دیجیتال</h1>
+            <div class="balance-display"
+                 id="walletBalance">2,450,000 تومان</div>
+            <p>موجودی قابل استفاده</p>
+            <div class="balance-actions">
+                <button class="action-btn"
+                        onclick="showChargeModal()">
+                    ➕ شارژ کیف پول
+                </button>
+                <button class="action-btn"
+                        onclick="showWithdrawModal()">
+                    💸 برداشت
+                </button>
+                <button class="action-btn"
+                        onclick="showTransferModal()">
+                    🔄 انتقال
+                </button>
+            </div>
+        </div>
+
+        <!-- پکیج‌های شارژ -->
+        <h2 style="margin-bottom: 20px; color: #333;">📦 پکیج‌های شارژ</h2>
+        <div class="pricing-cards">
+            <div class="pricing-card">
+                <h3 class="package-title">پکیج پایه</h3>
+                <div class="package-price">500,000</div>
+                <div class="package-bonus">+ 25,000 تومان هدیه</div>
+                <ul class="package-features">
+                    <li>5% شارژ اضافه</li>
+                    <li>اعتبار 6 ماهه</li>
+                    <li>پشتیبانی عادی</li>
+                </ul>
+                <button class="buy-btn"
+                        onclick="buyPackage('basic')">خرید پکیج</button>
+            </div>
+
+            <div class="pricing-card popular">
+                <span class="popular-badge">پرفروش</span>
+                <h3 class="package-title">پکیج نقره‌ای</h3>
+                <div class="package-price">1,000,000</div>
+                <div class="package-bonus">+ 100,000 تومان هدیه</div>
+                <ul class="package-features">
+                    <li>10% شارژ اضافه</li>
+                    <li>اعتبار 12 ماهه</li>
+                    <li>پشتیبانی اولویت‌دار</li>
+                    <li>تخفیف ویژه مشاوره</li>
+                </ul>
+                <button class="buy-btn"
+                        onclick="buyPackage('silver')">خرید پکیج</button>
+            </div>
+
+            <div class="pricing-card">
+                <h3 class="package-title">پکیج طلایی</h3>
+                <div class="package-price">2,000,000</div>
+                <div class="package-bonus">+ 300,000 تومان هدیه</div>
+                <ul class="package-features">
+                    <li>15% شارژ اضافه</li>
+                    <li>اعتبار نامحدود</li>
+                    <li>پشتیبانی VIP</li>
+                    <li>دسترسی به مشاوران ویژه</li>
+                    <li>جلسات گروهی رایگان</li>
+                </ul>
+                <button class="buy-btn"
+                        onclick="buyPackage('gold')">خرید پکیج</button>
+            </div>
+        </div>
+
+        <!-- تاریخچه تراکنش‌ها -->
+        <div class="transaction-history">
+            <div class="history-header">
+                <h2>📊 تاریخچه تراکنش‌ها</h2>
+                <button class="action-btn"
+                        style="background: #667eea; color: white;">
+                    دانلود گزارش
+                </button>
+            </div>
+
+            <div class="transaction-item">
+                <div class="transaction-info">
+                    <div class="transaction-icon icon-expense">💬</div>
+                    <div class="transaction-details">
+                        <h4>مشاوره با دکتر علی محمدی</h4>
+                        <div class="transaction-date">امروز - 14:30</div>
+                    </div>
+                </div>
+                <div class="transaction-amount amount-negative">-750,000 تومان</div>
+            </div>
+
+            <div class="transaction-item">
+                <div class="transaction-info">
+                    <div class="transaction-icon icon-income">💰</div>
+                    <div class="transaction-details">
+                        <h4>شارژ کیف پول</h4>
+                        <div class="transaction-date">دیروز - 10:15</div>
+                    </div>
+                </div>
+                <div class="transaction-amount amount-positive">+1,000,000 تومان</div>
+            </div>
+
+            <div class="transaction-item">
+                <div class="transaction-info">
+                    <div class="transaction-icon icon-expense">📞</div>
+                    <div class="transaction-details">
+                        <h4>مشاوره تلفنی - سارا کریمی</h4>
+                        <div class="transaction-date">2 روز پیش - 16:45</div>
+                    </div>
+                </div>
+                <div class="transaction-amount amount-negative">-500,000 تومان</div>
+            </div>
+
+            <div class="transaction-item">
+                <div class="transaction-info">
+                    <div class="transaction-icon icon-income">🎁</div>
+                    <div class="transaction-details">
+                        <h4>جایزه کاربر فعال</h4>
+                        <div class="transaction-date">1 هفته پیش</div>
+                    </div>
+                </div>
+                <div class="transaction-amount amount-positive">+100,000 تومان</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function buyPackage(type) {
+            const packages = {
+                'basic': { amount: 525000, bonus: 25000 },
+                'silver': { amount: 1100000, bonus: 100000 },
+                'gold': { amount: 2300000, bonus: 300000 }
+            };
+
+            const pkg = packages[type];
+            if (confirm(`آیا از خرید این پکیج به مبلغ ${pkg.amount.toLocaleString()} تومان اطمینان دارید؟`)) {
+                // شبیه‌سازی پرداخت
+                alert('در حال انتقال به درگاه پرداخت...');
+            }
+        }
+
+        function showChargeModal() {
+            const amount = prompt('مبلغ شارژ را وارد کنید (تومان):');
+            if (amount && !isNaN(amount)) {
+                alert(`در حال انتقال به درگاه پرداخت برای مبلغ ${parseInt(amount).toLocaleString()} تومان`);
+            }
+        }
+
+        function showWithdrawModal() {
+            const amount = prompt('مبلغ برداشت را وارد کنید (تومان):');
+            if (amount && !isNaN(amount)) {
+                alert(`درخواست برداشت ${parseInt(amount).toLocaleString()} تومان ثبت شد`);
+            }
+        }
+
+        function showTransferModal() {
+            alert('قابلیت انتقال به زودی...');
+        }
+    </script>
+</body>
+
+</html>
