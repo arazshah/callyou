@@ -95,6 +95,63 @@ class User(BaseModel):
     profile = None
     activity_logs = None
 
+    # Relationship to Consultant profile (one-to-one)
+    consultant = relationship(
+        "Consultant",
+        back_populates="user",
+        uselist=False,
+        cascade="all, delete-orphan"
+    )
+
+    # Relationship to Wallet (one-to-one)
+    wallet = relationship(
+        "Wallet",
+        back_populates="user",
+        uselist=False,
+        cascade="all, delete-orphan"
+    )
+
+    # Client: Consultation requests created by the user
+    client_requests = relationship(
+        "ConsultationRequest",
+        foreign_keys="ConsultationRequest.client_id",
+        back_populates="client",
+        cascade="all, delete-orphan"
+    )
+
+    # Client: Consultation sessions where the user is the client
+    client_sessions = relationship(
+        "ConsultationSession",
+        foreign_keys="ConsultationSession.client_id",
+        back_populates="client",
+        cascade="all, delete-orphan"
+    )
+
+    # Ratings given by this user (rater)
+    ratings_given = relationship(
+        "Rating",
+        foreign_keys="Rating.rater_id",
+        back_populates="rater",
+        cascade="all, delete-orphan"
+    )
+
+    # Reviews written by this user
+    reviews_written = relationship(
+        "Review",
+        foreign_keys="Review.reviewer_id",
+        back_populates="reviewer",
+        cascade="all, delete-orphan"
+    )
+
+    # Payment methods owned by the user
+    payment_methods = relationship(
+        "PaymentMethod",
+        back_populates="user",
+        cascade="all, delete-orphan"
+    )
+
+    
+
     # Helper methods
     def is_consultant(self) -> bool:
         """Check if user is a consultant"""
