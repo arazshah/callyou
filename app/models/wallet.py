@@ -144,7 +144,8 @@ class Transaction(BaseModel):
     balance_before = Column(Numeric(12, 2), nullable=False)
     balance_after = Column(Numeric(12, 2), nullable=False)
 
-    metadata = Column(JSON, nullable=True)
+    # Changed from 'metadata' to 'transaction_data' to avoid reserved word
+    transaction_data = Column(JSON, nullable=True)
     processed_at = Column(DateTime(timezone=True), nullable=True)
     failed_reason = Column(String(500), nullable=True)
 
@@ -193,3 +194,16 @@ class PaymentMethod(BaseModel):
 
     def __repr__(self):
         return f"<PaymentMethod(id={self.id}, type={self.method_type}, name={self.name})>"
+
+
+# Define relationships
+Wallet.user = relationship("User", backref="wallet")
+Wallet.transactions = relationship("Transaction", back_populates="wallet", cascade="all, delete-orphan")
+
+Transaction.wallet = relationship("Wallet", back_populates="transactions")
+Transaction.related_user = relationship("User", foreign_keys=[Transaction.related_user_id])
+Transaction.related_session = relationship("ConsultationSession", foreign_keys=[Transaction.related_session_id])
+Transaction.payment_method = relationship("PaymentMethod")
+
+PaymentMethod.user = relationship("User", backref="payment_methods")
+PaymentMethod.transactions = relationship("Transaction", back_populates="payment_method")

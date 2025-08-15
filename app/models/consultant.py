@@ -41,6 +41,15 @@ class WorkingMode(str, enum.Enum):
     COMPANY = "company"
 
 
+# Many-to-many relationship table between consultants and categories
+consultant_categories = Table(
+    "consultant_categories",
+    BaseModel.metadata,
+    Column("consultant_id", UUID(as_uuid=True), ForeignKey("consultants.id", ondelete="CASCADE"), primary_key=True),
+    Column("category_id", UUID(as_uuid=True), ForeignKey("consultation_categories.id", ondelete="CASCADE"), primary_key=True)
+)
+
+
 class Consultant(BaseModel):
     """Consultant profile and information"""
 
@@ -133,3 +142,28 @@ class ConsultationCategory(BaseModel):
 
     def __repr__(self):
         return f"<ConsultationCategory(name={self.name})>"
+
+
+# Define relationships
+Consultant.user = relationship("User", backref="consultant")
+Consultant.categories = relationship(
+    "ConsultationCategory",
+    secondary=consultant_categories,
+    back_populates="consultants"
+)
+
+ConsultationCategory.parent = relationship(
+    "ConsultationCategory", 
+    remote_side="ConsultationCategory.id", 
+    back_populates="children"
+)
+ConsultationCategory.children = relationship(
+    "ConsultationCategory", 
+    back_populates="parent", 
+    cascade="all, delete-orphan"
+)
+ConsultationCategory.consultants = relationship(
+    "Consultant",
+    secondary=consultant_categories,
+    back_populates="categories"
+)

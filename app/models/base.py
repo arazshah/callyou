@@ -1,25 +1,31 @@
-from sqlalchemy import Column, DateTime, func, Boolean
+"""
+Base model classes
+"""
+
+from sqlalchemy import Column, DateTime, func
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.ext.declarative import declared_attr
+from sqlalchemy.ext.declarative import declarative_base
 import uuid
 from datetime import datetime
 from typing import Dict, Any
 
-from app.database import Base
+# Create Base class
+Base = declarative_base()
 
 
 class TimestampMixin:
     """Mixin for timestamp fields"""
-    
+
     @declared_attr
     def created_at(cls):
         return Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
-    
+
     @declared_attr
     def updated_at(cls):
         return Column(
-            DateTime(timezone=True), 
-            server_default=func.now(), 
+            DateTime(timezone=True),
+            server_default=func.now(),
             onupdate=func.now(),
             nullable=False
         )
@@ -27,16 +33,16 @@ class TimestampMixin:
 
 class BaseModel(Base, TimestampMixin):
     """Base model with common fields"""
-    
+
     __abstract__ = True
-    
+
     id = Column(
-        UUID(as_uuid=True), 
-        primary_key=True, 
+        UUID(as_uuid=True),
+        primary_key=True,
         default=uuid.uuid4,
         nullable=False
     )
-    
+
     def to_dict(self) -> Dict[str, Any]:
         """Convert model to dictionary"""
         result = {}
@@ -49,12 +55,12 @@ class BaseModel(Base, TimestampMixin):
             else:
                 result[column.name] = value
         return result
-    
+
     def update_from_dict(self, data: Dict[str, Any]) -> None:
         """Update model from dictionary"""
         for key, value in data.items():
             if hasattr(self, key):
                 setattr(self, key, value)
-    
+
     def __repr__(self):
         return f"<{self.__class__.__name__}(id={self.id})>"

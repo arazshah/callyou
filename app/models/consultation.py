@@ -171,3 +171,14 @@ class ConsultationSession(BaseModel):
 
     def __repr__(self):
         return f"<ConsultationSession(id={self.id}, status={self.status})>"
+
+
+# Define relationships
+ConsultationRequest.client = relationship("User", foreign_keys=[ConsultationRequest.client_id])
+ConsultationRequest.consultant = relationship("Consultant")
+ConsultationRequest.category = relationship("ConsultationCategory")
+ConsultationRequest.session = relationship("ConsultationSession", back_populates="request", uselist=False)
+
+ConsultationSession.request = relationship("ConsultationRequest", back_populates="session")
+ConsultationSession.client = relationship("User", foreign_keys=[ConsultationSession.client_id])
+ConsultationSession.consultant = relationship("Consultant")

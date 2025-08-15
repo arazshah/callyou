@@ -2,47 +2,35 @@
 User related models
 """
 
-from datetime import datetime, date
-from enum import Enum as enum_Enum
-from typing import Optional
-
 from sqlalchemy import (
-    Column,
-    String,
-    Boolean,
-    Date,
-    DateTime,
-    Enum as SQLEnum,
-    ForeignKey,
-    Text,
-    Integer,
-    func,
+    Column, String, Boolean, Date, DateTime,
+    Enum as SQLEnum, ForeignKey, Text, Integer
 )
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
+from sqlalchemy.sql import func
+import enum
+from datetime import datetime
+from typing import Optional
 
 from .base import BaseModel
 
 
-# ======================
-# Enumeration Classes
-# ======================
-
-class UserType(str, enum_Enum):
+class UserType(str, enum.Enum):
     """User type enumeration"""
     CLIENT = "client"
     CONSULTANT = "consultant"
     ADMIN = "admin"
 
 
-class Gender(str, enum_Enum):
+class Gender(str, enum.Enum):
     """Gender enumeration"""
     MALE = "male"
     FEMALE = "female"
     OTHER = "other"
 
 
-class UserStatus(str, enum_Enum):
+class UserStatus(str, enum.Enum):
     """User status enumeration"""
     ACTIVE = "active"
     INACTIVE = "inactive"
@@ -50,14 +38,9 @@ class UserStatus(str, enum_Enum):
     BANNED = "banned"
 
 
-# ======================
-# User Model
-# ======================
-
 class User(BaseModel):
-    """
-    User model for authentication and basic info
-    """
+    """User model for authentication and basic info"""
+
     __tablename__ = "users"
 
     # Authentication fields
@@ -91,15 +74,6 @@ class User(BaseModel):
     password_reset_token = Column(String(255), nullable=True)
     password_reset_sent_at = Column(DateTime(timezone=True), nullable=True)
 
-    # Relationships (will be set later)
-    profile = None
-    activity_logs = None
-
-    
-
-    
-
-    # Helper methods
     def is_consultant(self) -> bool:
         """Check if user is a consultant"""
         return self.user_type == UserType.CONSULTANT
@@ -136,14 +110,9 @@ class User(BaseModel):
         return f"<User(email={self.email}, type={self.user_type}, status={self.status})>"
 
 
-# ======================
-# UserProfile Model
-# ======================
-
 class UserProfile(BaseModel):
-    """
-    Extended user profile information
-    """
+    """Extended user profile information"""
+
     __tablename__ = "user_profiles"
 
     # Foreign key
@@ -152,7 +121,7 @@ class UserProfile(BaseModel):
         ForeignKey("users.id", ondelete="CASCADE"),
         nullable=False,
         unique=True,
-        index=True,
+        index=True
     )
 
     # Personal information
@@ -196,27 +165,25 @@ class UserProfile(BaseModel):
     sms_notifications = Column(Boolean, default=True, nullable=False)
     push_notifications = Column(Boolean, default=True, nullable=False)
 
-    # Back-reference to User
-    user = None
-
-    # Computed properties
     @property
     def full_name(self) -> str:
         """Get full name"""
         if self.first_name and self.last_name:
             return f"{self.first_name} {self.last_name}"
-        if self.first_name:
+        elif self.first_name:
             return self.first_name
-        if self.last_name:
+        elif self.last_name:
             return self.last_name
-        if self.display_name:
+        elif self.display_name:
             return self.display_name
-        return "کاربر ناشناس"
+        else:
+            return "کاربر ناشناس"
 
     @property
     def age(self) -> Optional[int]:
         """Calculate age from birth date"""
         if self.birth_date:
+            from datetime import date
             today = date.today()
             return today.year - self.birth_date.year - (
                 (today.month, today.day) < (self.birth_date.month, self.birth_date.day)
@@ -231,22 +198,17 @@ class UserProfile(BaseModel):
         return f"<UserProfile(user_id={self.user_id}, name={self.full_name})>"
 
 
-# ======================
-# ActivityLog Model
-# ======================
-
 class ActivityLog(BaseModel):
-    """
-    User activity logging for security and analytics
-    """
+    """User activity logging for security and analytics"""
+
     __tablename__ = "activity_logs"
 
     # Foreign key
     user_id = Column(
         UUID(as_uuid=True),
         ForeignKey("users.id", ondelete="CASCADE"),
-        nullable=True,  # Allow null for system logs
-        index=True,
+        nullable=True,
+        index=True
     )
 
     # Activity details
@@ -255,119 +217,33 @@ class ActivityLog(BaseModel):
     resource_id = Column(UUID(as_uuid=True), nullable=True)
 
     # Request details
-    ip_address = Column(String(45), nullable=True)  # Supports IPv6
+    ip_address = Column(String(45), nullable=True)
     user_agent = Column(Text, nullable=True)
     request_path = Column(String(255), nullable=True)
     request_method = Column(String(10), nullable=True)
 
     # Additional data
-    details = Column(Text, nullable=True)  # Can store JSON
+    details = Column(Text, nullable=True)
     success = Column(Boolean, default=True, nullable=False)
     error_message = Column(Text, nullable=True)
-
-    # Back-reference to User
-    user = None
 
     def __repr__(self):
         return f"<ActivityLog(user_id={self.user_id}, action={self.action})>"
 
 
-# ======================
-# Define Relationships
-# ======================
-
-# Relationship to Consultant profile (one-to-one)
-consultant = relationship(
-        "Consultant",
-        back_populates="user",
-        uselist=False,
-        cascade="all, delete-orphan"
-    )
-
-    # Client: Consultation requests created by the user
-client_requests = relationship(
-        "ConsultationRequest",
-        foreign_keys="ConsultationRequest.client_id",
-        back_populates="client",
-        cascade="all, delete-orphan"
-    )
-
-    # Client: Consultation sessions where the user is the client
-client_sessions = relationship(
-        "ConsultationSession",
-        foreign_keys="ConsultationSession.client_id",
-        back_populates="client",
-        cascade="all, delete-orphan"
-    )
-
-    # Ratings given by this user (rater)
-ratings_given = relationship(
-        "Rating",
-        foreign_keys="Rating.rater_id",
-        back_populates="rater",
-        cascade="all, delete-orphan"
-    )
-
-    # Reviews written by this user
-reviews_written = relationship(
-        "Review",
-        foreign_keys="Review.reviewer_id",
-        back_populates="reviewer",
-        cascade="all, delete-orphan"
-    )
-
-    # Payment methods owned by the user
-payment_methods = relationship(
-        "PaymentMethod",
-        back_populates="user",
-        cascade="all, delete-orphan"
-    )
-
-# User <-> UserProfile (One-to-One)
+# Define relationships
 User.profile = relationship(
     "UserProfile",
     back_populates="user",
     uselist=False,
-    cascade="all, delete-orphan",
-    single_parent=True,
+    cascade="all, delete-orphan"
 )
 
-# User <-> ActivityLog (One-to-Many)
 User.activity_logs = relationship(
     "ActivityLog",
     back_populates="user",
-    cascade="all, delete-orphan",
-)
-
-# UserProfile -> User
-UserProfile.user = relationship(
-    "User",
-    back_populates="profile",
-)
-
-# ActivityLog -> User
-ActivityLog.user = relationship(
-    "User",
-    back_populates="activity_logs",
-)
-
-# Define relationships after all models are created
-User.profile = relationship(
- "UserProfile", 
- back_populates="user", 
- uselist=False, 
- cascade="all, delete-orphan"
-)
-
-User.activity_logs = relationship(
- "ActivityLog", 
- back_populates="user", 
- cascade="all, delete-orphan"
+    cascade="all, delete-orphan"
 )
 
 UserProfile.user = relationship("User", back_populates="profile")
 ActivityLog.user = relationship("User", back_populates="activity_logs")
-
-# These will be added when we import other models
-# User.consultant = relationship("Consultant", back_populates="user", uselist=False)
-# User.wallet = relationship("Wallet", back_populates="user", uselist=False)
